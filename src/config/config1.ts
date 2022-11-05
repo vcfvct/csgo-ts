@@ -9,6 +9,7 @@ export const appConfig: AppConfig = {
   adbPath: '%HOMEDRIVE%%HOMEPATH%\\Documents\\platform-tools\\adb.exe',
   // 打开/关闭飞行模式间隔时间
   airplaneToggleWaitTime: 5,
+  ipAnalysisFile: 'ip-analysis.txt',
   serverConfig: {
     serverUrl: 'http://192.168.0.202:9012',
     hostId: 888,

@@ -18,4 +18,5 @@ export interface AppConfig {
   apiTimeout: number;
   adbPath: string;
   airplaneToggleWaitTime: number;
+  ipAnalysisFile?: string;
 }

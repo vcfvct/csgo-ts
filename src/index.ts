@@ -5,6 +5,7 @@ import { TencentEmail1 } from './config/email.config';
 import { ItemOrderHistoryService } from './service/item-order-history.service';
 const globalTunnel = require('global-tunnel-ng');
 import * as yargs from 'yargs';
+import fs from 'fs';
 
 const args = yargs
   .option('config', {
@@ -29,6 +30,8 @@ if (args.proxy) {
   const configFile = await import(`./config/config${args.config ?? 1}`);
   const itemOrderHistoryService: ItemOrderHistoryService = Container.get(ItemOrderHistoryService);
   itemOrderHistoryService.appConfig = configFile.appConfig;
+  const ipAnalysisFile = itemOrderHistoryService.appConfig.ipAnalysisFile;
+  if (ipAnalysisFile && fs.existsSync(ipAnalysisFile)) fs.unlinkSync(ipAnalysisFile);
   await itemOrderHistoryService.scanAll();
 })();
 

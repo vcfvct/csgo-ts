@@ -6,7 +6,7 @@ import { URLSearchParams } from 'url';
 import { AppConfig, ItemToScan } from '../types';
 import util from 'util';
 import { exec } from 'child_process';
-import { setMaxIdleHTTPParsers } from 'http';
+import fs from 'fs';
 const execAsync = util.promisify(exec);
 
 @Service()
@@ -41,14 +41,27 @@ export class ItemOrderHistoryService {
   async scanAll(): Promise<void> {
     const itemPromises = this.appConfig.items.map(item => this.getItemById(item.nameId));
     const results = await Promise.allSettled(itemPromises);
+    let errroCount = 0;
     results.forEach((settledResult, index) => {
       const currentItem = this.appConfig.items[index];
       if (settledResult.status === 'fulfilled') {
         this.handleNewItem(currentItem, settledResult.value);
       } else {
+        errroCount++;
         console.error(`Error getting count for ${currentItem.description}, reason: '${settledResult.reason}'.`);
       }
     });
+
+    // 如果配置了ip analysis文件, 就写入分析结果
+    if (this.appConfig.ipAnalysisFile) {
+      try {
+        const rs = await got('https://api.ipify.org?format=json');
+        fs.appendFile(this.appConfig.ipAnalysisFile, `\r\n ${rs.body} \r\n 扫描数量: '${results.length}', 错误数量: '${errroCount}' \r\n \r\n  `, () => { });
+      } catch (e) {
+        console.error(`不能获取外网ip`, e);
+      }
+    }
+
     // 打开关闭飞行模式
     await this.toggleAirPlainMode();
     setTimeout(() => this.scanAll(), this.appConfig.scanInterval * 1000);
