@@ -46,7 +46,7 @@ export class ItemOrderHistoryService {
       if (settledResult.status === 'fulfilled') {
         this.handleNewItem(currentItem, settledResult.value);
       } else {
-        console.error(`Error getting count for ${currentItem.description}`);
+        console.error(`Error getting count for ${currentItem.description}, reason: '${settledResult.reason}'.`);
       }
     });
     // 打开关闭飞行模式
