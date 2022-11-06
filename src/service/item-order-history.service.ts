@@ -55,8 +55,8 @@ export class ItemOrderHistoryService {
     // 如果配置了ip analysis文件, 就写入分析结果
     if (this.appConfig.ipAnalysisFile) {
       try {
-        const rs = await got('https://api.ipify.org?format=json');
-        fs.appendFile(this.appConfig.ipAnalysisFile, `\r\n ${rs.body} \r\n 扫描数量: '${results.length}', 错误数量: '${errroCount}' \r\n \r\n  `, () => { });
+        const rs = await got('https://api.ipify.org?format=json', { timeout: 2000 });
+        fs.appendFile(this.appConfig.ipAnalysisFile, `\r\n ${rs.body} \r\n 扫描数量: '${results.length}', 错误数量: '${errroCount}' \r\n \r\n  `, () => {});
       } catch (e) {
         console.error(`不能获取外网ip`, e);
       }
@@ -91,7 +91,7 @@ export class ItemOrderHistoryService {
 
 
   handleNewItem(currentItem: ItemToScan, itemOrderHistory: ItemOrderHistory): void {
-    const newItemCount: number = itemOrderHistory.sell_order_count === 0 ? 0 : parseInt(itemOrderHistory.sell_order_count.replace(/,/g, ''));
+    const newItemCount: number = !itemOrderHistory.sell_order_count || itemOrderHistory.sell_order_count === 0 ? 0 : parseInt(itemOrderHistory.sell_order_count.replace(/,/g, ''));
     console.info(`###'${newItemCount}': ${currentItem.description.padEnd(40, '.')} '${new Date().toLocaleString()}'`);
     if (currentItem.count !== undefined && currentItem.count! >= 0 && currentItem.count! < newItemCount) {
       const parseTime: string = new Date().toLocaleString();
