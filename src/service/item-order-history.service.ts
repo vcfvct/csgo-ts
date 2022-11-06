@@ -91,7 +91,7 @@ export class ItemOrderHistoryService {
 
 
   handleNewItem(currentItem: ItemToScan, itemOrderHistory: ItemOrderHistory): void {
-    const newItemCount: number = !itemOrderHistory.sell_order_count || itemOrderHistory.sell_order_count === 0 ? 0 : parseInt(itemOrderHistory.sell_order_count.replace(/,/g, ''));
+    const newItemCount: number = !itemOrderHistory.sell_order_count ? 0 : parseInt(itemOrderHistory.sell_order_count?.replace(/,/g, ''));
     console.info(`###'${newItemCount}': ${currentItem.description.padEnd(40, '.')} '${new Date().toLocaleString()}'`);
     if (currentItem.count !== undefined && currentItem.count! >= 0 && currentItem.count! < newItemCount) {
       const parseTime: string = new Date().toLocaleString();
