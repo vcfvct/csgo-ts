@@ -32,6 +32,6 @@ if (args.proxy) {
   itemOrderHistoryService.appConfig = configFile.appConfig;
   const ipAnalysisFile = itemOrderHistoryService.appConfig.ipAnalysisFile;
   if (ipAnalysisFile && fs.existsSync(ipAnalysisFile)) fs.unlinkSync(ipAnalysisFile);
-  await itemOrderHistoryService.scanAll();
+  await itemOrderHistoryService.scanAll(true);
 })();
 

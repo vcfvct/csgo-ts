@@ -20,3 +20,19 @@ export interface AppConfig {
   airplaneToggleWaitTime: number;
   ipAnalysisFile?: string;
 }
+
+
+export interface ProxyData {
+  ip: string;
+  port: number;
+  expire_time: string;
+  city: string;
+  isp: string;
+}
+
+export interface ProxyResponse {
+  code: number;
+  success: boolean;
+  msg: string;
+  data: ProxyData[];
+}

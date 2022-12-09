@@ -11,7 +11,6 @@
   "author": "Han Li",
   "license": "MIT",
   "devDependencies": {
-    "@types/got": "^9.2.2",
     "@types/node": "^18.11.9",
     "@types/nodemailer": "^4.6.5",
     "@types/yargs": "^13.0.3",
@@ -24,7 +23,8 @@
   },
   "dependencies": {
     "global-tunnel-ng": "^2.7.1",
-    "got": "^9.5.0",
+    "got": "^12.5.3",
+    "hpagent": "^1.2.0",
     "nodemailer": "^4.7.0",
     "reflect-metadata": "^0.1.12",
     "ts-node": "^8.5.4",

@@ -1,17 +1,15 @@
-import { Service, Inject } from 'typedi';
-import got, { Response } from 'got';
+import { Service } from 'typedi';
+import got from 'got';
 // import { EmailService } from './email.service';
-import { base64Encode, sleep } from '../common/utils';
+import { base64Encode, sleep, getProxy } from '../common/utils';
 import { URLSearchParams } from 'url';
-import { AppConfig, ItemToScan } from '../types';
-import util from 'util';
-import { exec } from 'child_process';
-import fs from 'fs';
-const execAsync = util.promisify(exec);
+import { AppConfig, ItemToScan, ProxyData } from '../types';
+import { HttpsProxyAgent } from 'hpagent';
 
 @Service()
 export class ItemOrderHistoryService {
   appConfig: AppConfig;
+  proxy: string;
 
   // @Inject()
   // emailService: EmailService;
@@ -22,7 +20,14 @@ export class ItemOrderHistoryService {
   // @Retryable({ maxAttempts: 1, backOff: 1 })
   async getItemById(itemNameId: number): Promise<ItemOrderHistory> {
     const url = `${this.baseUrl}${itemNameId}`;
-    const res: Response<ItemOrderHistory> = await got.get(url, { json: true, timeout: this.appConfig.apiTimeout * 1000, rejectUnauthorized: false });
+    const res = await got.get<ItemOrderHistory>(url, {
+      json: true,
+      timeout: { connect: this.appConfig.apiTimeout * 1000 },
+      https: { rejectUnauthorized: false },
+      agent: {
+        https: new HttpsProxyAgent({ proxy: this.proxy })
+      }
+    });
     return res.body;
   }
 
@@ -38,55 +43,30 @@ export class ItemOrderHistoryService {
   }
 
   // 扫描所有配置的物品.
-  async scanAll(): Promise<void> {
+  async scanAll(refreshProxy = false): Promise<void> {
+    if (refreshProxy) {
+      const proxyData: ProxyData[] = await getProxy();
+      this.proxy = `http://${proxyData[0].ip}:${proxyData[0].port}`;
+
+      refreshProxy = false;
+    }
     const itemPromises = this.appConfig.items.map(item => this.getItemById(item.nameId));
     const results = await Promise.allSettled(itemPromises);
-    let errroCount = 0;
     results.forEach((settledResult, index) => {
       const currentItem = this.appConfig.items[index];
       if (settledResult.status === 'fulfilled') {
         this.handleNewItem(currentItem, settledResult.value);
       } else {
-        errroCount++;
         console.error(`Error getting count for ${currentItem.description}, reason: '${settledResult.reason}'.`);
+        if (settledResult.reason?.statusCode === 429) {
+          refreshProxy = true;
+        }
       }
     });
 
-    // 如果配置了ip analysis文件, 就写入分析结果
-    if (this.appConfig.ipAnalysisFile) {
-      try {
-        const rs = await got('https://api.ipify.org?format=json', { timeout: 2000 });
-        fs.appendFile(this.appConfig.ipAnalysisFile, `\r\n ${rs.body} \r\n 扫描数量: '${results.length}', 错误数量: '${errroCount}' \r\n \r\n  `, () => {});
-      } catch (e) {
-        console.error(`不能获取外网ip`, e);
-      }
-    }
-
     // 打开关闭飞行模式
-    await this.toggleAirPlainMode();
-    setTimeout(() => this.scanAll(), this.appConfig.scanInterval * 1000);
-  }
-
-  async toggleAirPlainMode(): Promise<void> {
-    try {
-      console.info('即将打开飞行模式!');
-      const { stdout: offOut, stderr: offErr } = await execAsync(`${this.appConfig.adbPath} shell "${this.getAdbAirplaneModeCommand(true)}"`);
-      console.log('stdout:', offOut);
-      offErr && console.log('stderr:', offErr);
-
-      console.info(`${this.appConfig.airplaneToggleWaitTime}秒后关闭飞行模式!`);
-      await sleep(this.appConfig.airplaneToggleWaitTime * 1000);
-
-      const { stdout: onOut, stderr: onErr } = await execAsync(`${this.appConfig.adbPath} shell "${this.getAdbAirplaneModeCommand(false)}"`);
-      console.log('stdout:', onOut);
-      onErr && console.log('stderr:', onErr);
-    } catch (e) {
-      console.error(e); // should contain code (exit code) and signal (that caused the termination).
-    }
-  }
-
-  getAdbAirplaneModeCommand(on: boolean): string {
-    return `su -c 'settings put global airplane_mode_on ${on ? 1 : 0}; am broadcast -a android.intent.action.AIRPLANE_MODE --ez state ${on ? 'true' : 'false'}'`;
+    // await this.toggleAirPlainMode();
+    setTimeout(() => this.scanAll(refreshProxy), this.appConfig.scanInterval * 1000);
   }
 
 
@@ -134,7 +114,7 @@ export class ItemOrderHistoryService {
     const query = new URLSearchParams([['content', apiItemEncoded]]);
     const serverApiUrl = `${this.appConfig.serverConfig.serverUrl}/api/server/dotnet/itemChange`;
     console.info(`calling API '${serverApiUrl}' with param: '${query.toString()}'`);
-    got.get(serverApiUrl, { query });
+    got.get(serverApiUrl, { searchParams: query });
   }
 }
 
