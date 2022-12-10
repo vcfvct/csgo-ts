@@ -7,11 +7,26 @@
     {
       "name": "Debug index.ts",
       "type": "node",
-      "runtimeArgs": ["--experimental-specifier-resolution=node"],
+      "runtimeArgs": [
+        "--experimental-specifier-resolution=node"
+      ],
       "request": "launch",
       "program": "${workspaceFolder}/src/index.ts",
       "preLaunchTask": "tsc: build - tsconfig.json",
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch ESModule TypeScript File",
+      "cwd": "${workspaceFolder}",
+      "runtimeArgs": [
+        "--loader",
+        "ts-node/esm"
+      ],
+      "program": "${workspaceFolder}/src/index.ts",
     }
   ]
 }
