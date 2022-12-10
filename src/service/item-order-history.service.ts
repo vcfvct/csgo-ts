@@ -54,9 +54,8 @@ export class ItemOrderHistoryService {
         this.handleNewItem(currentItem, settledResult.value);
       } else {
         console.error(`Error getting count for ${currentItem.description}, reason: '${settledResult.reason}'.`);
-        if (settledResult.reason?.statusCode === 429) {
-          refreshProxy = true;
-        }
+        refreshProxy = true;
+        // if (settledResult.reason?.statusCode === 429) { }
       }
     });
 
@@ -67,24 +66,28 @@ export class ItemOrderHistoryService {
 
 
   handleNewItem(currentItem: ItemToScan, itemOrderHistory: ItemOrderHistory): void {
-    const newItemCount: number = !itemOrderHistory.sell_order_count ? 0 : parseInt(itemOrderHistory.sell_order_count?.replace(/,/g, ''));
-    console.info(`###'${newItemCount}': ${currentItem.description.padEnd(40, '.')} '${new Date().toLocaleString()}'`);
-    if (currentItem.count !== undefined && currentItem.count! >= 0 && currentItem.count! < newItemCount) {
-      const parseTime: string = new Date().toLocaleString();
-      const msg = `${parseTime} 数量变化:${currentItem.count}->${newItemCount}-${currentItem.description} 最低求购价: ${itemOrderHistory.buy_order_price}`;
-      /*
-       * this.emailService.sendEmail(msg, `
-       *   <a href="${currentItem.url}">购买链接</a>
-       *   <br/> ${msg}
-       *   <br/> <a href="https://steamcommunity-a.akamaihd.net/market/itemordershistogram?norender=1&country=HK&language=schinese&currency=23&item_nameid=${currentItem.nameId}">API链接</a>
-       *   <br/>`,
-       * );
-       */
-      // notify server on item change
-      this.callItemChangeApi(currentItem, newItemCount, parseTime, itemOrderHistory);
+    try {
+      const newItemCount: number = !itemOrderHistory.sell_order_count ? 0 : parseInt(itemOrderHistory.sell_order_count?.replace(/,/g, ''));
+      console.info(`###'${newItemCount}': ${currentItem.description.padEnd(40, '.')} '${new Date().toLocaleString()}'`);
+      if (currentItem.count !== undefined && currentItem.count! >= 0 && currentItem.count! < newItemCount) {
+        const parseTime: string = new Date().toLocaleString();
+        const msg = `${parseTime} 数量变化:${currentItem.count}->${newItemCount}-${currentItem.description} 最低求购价: ${itemOrderHistory.buy_order_price}`;
+        /*
+         * this.emailService.sendEmail(msg, `
+         *   <a href="${currentItem.url}">购买链接</a>
+         *   <br/> ${msg}
+         *   <br/> <a href="https://steamcommunity-a.akamaihd.net/market/itemordershistogram?norender=1&country=HK&language=schinese&currency=23&item_nameid=${currentItem.nameId}">API链接</a>
+         *   <br/>`,
+         * );
+         */
+        // notify server on item change
+        this.callItemChangeApi(currentItem, newItemCount, parseTime, itemOrderHistory);
+      }
+      currentItem.count = newItemCount;
+      currentItem.sellPrice = itemOrderHistory.sell_order_price;
+    } catch (e) {
+      console.error(`Cannot compare item ${currentItem.description} with the order history: ${itemOrderHistory}.`, e);
     }
-    currentItem.count = newItemCount;
-    currentItem.sellPrice = itemOrderHistory.sell_order_price;
   }
 
   callItemChangeApi(currentItem: ItemToScan, newItemCount: number, parseTime: string, itemOrderHistory: ItemOrderHistory): void {
