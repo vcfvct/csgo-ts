@@ -10,6 +10,7 @@ import { HttpsProxyAgent } from 'hpagent';
 export class ItemOrderHistoryService {
   appConfig: AppConfig;
   proxy: string;
+  tokenBucket = 5;
 
   // @Inject()
   // emailService: EmailService;
@@ -21,7 +22,7 @@ export class ItemOrderHistoryService {
   async getItemById(itemNameId: number): Promise<ItemOrderHistory> {
     const url = `${this.baseUrl}${itemNameId}`;
     const res = await fetch(url, {
-      // agent: new HttpsProxyAgent({ proxy: this.proxy })
+      agent: new HttpsProxyAgent({ proxy: this.proxy }),
       headers: {
         'User-Agent': 'Mozilla/6.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0',
       }
@@ -43,29 +44,38 @@ export class ItemOrderHistoryService {
   }
 
   // 扫描所有配置的物品.
-  async scanAll(refreshProxy = false): Promise<void> {
-   /*  if (refreshProxy) {
+  async scanAll(refreshProxy = false, count = this.tokenBucket): Promise<void> {
+    if (refreshProxy) {
       const proxyData: ProxyData[] = await getProxy();
       this.proxy = `http://${proxyData[0].ip}:${proxyData[0].port}`;
-
+      console.info(`...... using new proxy: ${this.proxy}`);
       refreshProxy = false;
-    } */
+    }
     const itemPromises = this.appConfig.items.map(item => this.getItemById(item.nameId));
     const results = await Promise.allSettled(itemPromises);
     results.forEach((settledResult, index) => {
       const currentItem = this.appConfig.items[index];
       if (settledResult.status === 'fulfilled') {
         this.handleNewItem(currentItem, settledResult.value);
+        count < this.tokenBucket && count++;
       } else {
         console.error(`Error getting count for ${currentItem.description}, reason: '${settledResult.reason}'.`);
         refreshProxy = true;
-        // if (settledResult.reason?.statusCode === 429) { }
+        if (settledResult.reason?.message === 'Too Many Requests') {
+          count--;
+          if(count === 0 ){
+           refreshProxy = true;
+           count = this.tokenBucket;
+          }
+        } else {
+          refreshProxy = true;
+        }
       }
     });
 
     // 打开关闭飞行模式
     // await this.toggleAirPlainMode();
-    setTimeout(() => this.scanAll(refreshProxy), this.appConfig.scanInterval * 1000);
+    setTimeout(() => this.scanAll(refreshProxy, count), this.appConfig.scanInterval * 1000);
   }
 
 
