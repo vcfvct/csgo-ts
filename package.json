@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node dist/index.js",
+    "start": "npm run build && node --experimental-specifier-resolution=node dist/index.js",
     "lint": "eslint --ext .ts src/"
   },
   "author": "Han Li",

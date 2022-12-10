@@ -23,6 +23,7 @@ export class ItemOrderHistoryService {
     const res = await fetch(url, {
       agent: new HttpsProxyAgent({ proxy: this.proxy })
     });
+    if(!res.ok) throw new Error(res.statusText)
     const json = await res.json() as ItemOrderHistory;
     return json;
   }
