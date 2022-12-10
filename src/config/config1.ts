@@ -2,7 +2,7 @@ import { AppConfig } from '../types';
 
 export const appConfig: AppConfig = {
   // 扫描间隔时间
-  scanInterval: 5,
+  scanInterval: 1,
   // API 超时时间
   apiTimeout: 2,
   // adb.exe 路径

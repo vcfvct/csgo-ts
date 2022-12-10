@@ -22,7 +22,14 @@ export class ItemOrderHistoryService {
   // @Retryable({ maxAttempts: 1, backOff: 1 })
   async getItemById(itemNameId: number): Promise<ItemOrderHistory> {
     const url = `${this.baseUrl}${itemNameId}`;
-    const res: Response<ItemOrderHistory> = await got.get(url, { json: true, timeout: this.appConfig.apiTimeout * 1000, rejectUnauthorized: false });
+    const res: Response<ItemOrderHistory> = await got.get(url, {
+      json: true,
+      timeout: this.appConfig.apiTimeout * 1000,
+      rejectUnauthorized: false,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0',
+      },
+     });
     return res.body;
   }
 
@@ -53,17 +60,17 @@ export class ItemOrderHistoryService {
     });
 
     // 如果配置了ip analysis文件, 就写入分析结果
-    if (this.appConfig.ipAnalysisFile) {
+/*     if (this.appConfig.ipAnalysisFile) {
       try {
         const rs = await got('https://api.ipify.org?format=json', { timeout: 2000 });
         fs.appendFile(this.appConfig.ipAnalysisFile, `\r\n ${rs.body} \r\n 扫描数量: '${results.length}', 错误数量: '${errroCount}' \r\n \r\n  `, () => {});
       } catch (e) {
         console.error(`不能获取外网ip`, e);
       }
-    }
+    } */
 
     // 打开关闭飞行模式
-    await this.toggleAirPlainMode();
+    // await this.toggleAirPlainMode();
     setTimeout(() => this.scanAll(), this.appConfig.scanInterval * 1000);
   }
 
