@@ -21,7 +21,10 @@ export class ItemOrderHistoryService {
   async getItemById(itemNameId: number): Promise<ItemOrderHistory> {
     const url = `${this.baseUrl}${itemNameId}`;
     const res = await fetch(url, {
-      agent: new HttpsProxyAgent({ proxy: this.proxy })
+      // agent: new HttpsProxyAgent({ proxy: this.proxy })
+      headers: {
+        'User-Agent': 'Mozilla/6.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0',
+      }
     });
     if(!res.ok) throw new Error(res.statusText)
     const json = await res.json() as ItemOrderHistory;
@@ -41,12 +44,12 @@ export class ItemOrderHistoryService {
 
   // 扫描所有配置的物品.
   async scanAll(refreshProxy = false): Promise<void> {
-    if (refreshProxy) {
+   /*  if (refreshProxy) {
       const proxyData: ProxyData[] = await getProxy();
       this.proxy = `http://${proxyData[0].ip}:${proxyData[0].port}`;
 
       refreshProxy = false;
-    }
+    } */
     const itemPromises = this.appConfig.items.map(item => this.getItemById(item.nameId));
     const results = await Promise.allSettled(itemPromises);
     results.forEach((settledResult, index) => {
