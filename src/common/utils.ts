@@ -20,7 +20,7 @@ export function throwError(msg?: string): void {
 export const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getProxy = async (): Promise<ProxyData[]> => {
-  const proxyUrl = 'http://zltiqu.pyhttp.taolop.com/getip?count=1&neek=58008&type=1&yys=0&port=1&sb=&mr=1&sep=1';
+  const proxyUrl = 'http://zltiqu.pyhttp.taolop.com/getip?count=1&neek=58008&type=2&yys=0&port=1&sb=&mr=1&sep=1';
   const res = await fetch(proxyUrl);
   const json = await res.json() as ProxyResponse;
   return json.data;
