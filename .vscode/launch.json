@@ -5,23 +5,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Current TS File",
+      "name": "Debug index.ts",
       "type": "node",
+      "runtimeArgs": ["--experimental-specifier-resolution=node"],
       "request": "launch",
-      "env": {
-        "TS_NODE_FILES": "true"
-      },
-      "args": [
-        "${relativeFile}",
-      ],
-      "runtimeArgs": [
-        "--nolazy",
-        "-r",
-        "ts-node/register"
-      ],
-      "sourceMaps": true,
-      "cwd": "${workspaceRoot}",
-      "protocol": "inspector",
+      "program": "${workspaceFolder}/src/index.ts",
+      "preLaunchTask": "tsc: build - tsconfig.json",
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
     }
   ]
 }

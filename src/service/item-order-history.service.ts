@@ -1,9 +1,9 @@
 import { Service } from 'typedi';
-import got from 'got';
 // import { EmailService } from './email.service';
 import { base64Encode, sleep, getProxy } from '../common/utils';
 import { URLSearchParams } from 'url';
 import { AppConfig, ItemToScan, ProxyData } from '../types';
+import fetch from 'node-fetch';
 import { HttpsProxyAgent } from 'hpagent';
 
 @Service()
@@ -20,15 +20,11 @@ export class ItemOrderHistoryService {
   // @Retryable({ maxAttempts: 1, backOff: 1 })
   async getItemById(itemNameId: number): Promise<ItemOrderHistory> {
     const url = `${this.baseUrl}${itemNameId}`;
-    const res = await got.get<ItemOrderHistory>(url, {
-      json: true,
-      timeout: { connect: this.appConfig.apiTimeout * 1000 },
-      https: { rejectUnauthorized: false },
-      agent: {
-        https: new HttpsProxyAgent({ proxy: this.proxy })
-      }
+    const res = await fetch(url, {
+      agent: new HttpsProxyAgent({ proxy: this.proxy })
     });
-    return res.body;
+    const json = await res.json() as ItemOrderHistory;
+    return json;
   }
 
   async scanItems(itemIndex: number): Promise<void> {
@@ -36,7 +32,7 @@ export class ItemOrderHistoryService {
     try {
       const itemOrderHistory: ItemOrderHistory = await this.getItemById(currentItem.nameId);
       this.handleNewItem(currentItem, itemOrderHistory);
-    } catch (e) {
+    } catch (e: any) {
       console.error(`刷新物品'${currentItem.description}'错误: ${e.message}`);
     }
     setTimeout(() => this.scanItems(++itemIndex), this.appConfig.scanInterval * 1000);
@@ -113,8 +109,10 @@ export class ItemOrderHistoryService {
     const apiItemEncoded: string = base64Encode(JSON.stringify({ itemList: [apiItem] }));
     const query = new URLSearchParams([['content', apiItemEncoded]]);
     const serverApiUrl = `${this.appConfig.serverConfig.serverUrl}/api/server/dotnet/itemChange`;
+    const url = new URL(serverApiUrl);
+    url.search = query.toString();
     console.info(`calling API '${serverApiUrl}' with param: '${query.toString()}'`);
-    got.get(serverApiUrl, { searchParams: query });
+    fetch(url.toString());
   }
 }
 

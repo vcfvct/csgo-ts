@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
-    "target": "ES2017",
+    "module": "ES2022",
+    "target": "ES2022",
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -9,8 +9,9 @@
     "sourceMap": true,
     "strict": true,
     "strictPropertyInitialization": false,
+    "skipLibCheck": true,
     "lib": [
-      "es2017",
+      "es2022",
       "esnext.asynciterable"
     ],
     "outDir": "dist",
@@ -22,6 +23,9 @@
       ]
     }
   },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node" },
   "include": [
     "src/**/*",
     "release-changes/**/*"
